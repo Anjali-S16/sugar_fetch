@@ -9,7 +9,7 @@ from pyecharts.charts import Line
 from streamlit_echarts import st_pyecharts
 st.set_page_config(layout="wide")
 # Title of the dashboard
-st.title("Sugar Data Dashboard")
+st.title("Sugar Data Dashboard NCDEX")
 
 # Sample data
 # Replace this with your actual dataset
