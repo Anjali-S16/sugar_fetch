@@ -12,7 +12,7 @@ st.set_page_config(layout="wide")
 st.title("Sugar Data Dashboard - NCDEX")
 
 # Load data from Google Sheets (Modify URL accordingly)
-csv_url = "Sugar Prices.xlsv"
+csv_url = "https://docs.google.com/spreadsheets/d/1su6AwlcuSMKHpZLuDE0V4axfe8UthC2V0644WmJd8ew/edit?pli=1&gid=1002008798#gid=1002008798"
 df = pd.read_excel(csv_url)
 
 # Ensure correct data types
