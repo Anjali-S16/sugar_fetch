@@ -1,99 +1,74 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import numpy as np
-
 from pyecharts import options as opts
-from pyecharts.charts import Bar
 from pyecharts.charts import Line
 from streamlit_echarts import st_pyecharts
+
+# Set Streamlit page layout
 st.set_page_config(layout="wide")
+
 # Title of the dashboard
-st.title("Sugar Data Dashboard- NCDEX")
+st.title("Sugar Data Dashboard - NCDEX")
 
-# Sample data
-# Replace this with your actual dataset
+# Load data from Google Sheets (Modify URL accordingly)
+csv_url = "Sugar Prices.xlsv"
+df = pd.read_excel(csv_url)
 
-df = pd.read_excel("SpotPricesDetails.xlsx")
+# Ensure correct data types
+df = df[["Date", "Kolhapur (S)"]].copy()
+df["Date"] = pd.to_datetime(df["Date"], errors='coerce')  # Convert Date column to datetime format
+df = df.dropna()  # Remove any rows with missing values
+df = df.sort_values("Date")
 
-# Sort data by date for a proper trend line
+# Convert "Kolhapur (S)" column to numeric
+df["Kolhapur (S)"] = pd.to_numeric(df["Kolhapur (S)"], errors='coerce')
 
-df = df.sort_values("Price Date")
-df["Price Date"] = df["Price Date"].astype(str)
-
-df["Price Time"] = df["Price Time"].astype(str)
-
-print(df.dtypes)
-# Section heading
+# Section Heading
 st.subheader("Latest Trading Data")
 
 # Metric Cards to display the latest row
 latest_row = df.iloc[-1]
+last_price_value = latest_row["Kolhapur (S)"]
 
-col11, col12, col13,col14 = st.columns(4)
-last_price_value = latest_row['Price']
+# Extract previous day's data for comparison
+previous_row = df.iloc[-2] if len(df) > 1 else latest_row
+previous_price = previous_row["Kolhapur (S)"]
+previous_date = previous_row["Date"]
 
-# Example metric card comparison - let's say the last metric is 3500 (for demonstration purposes)
-center_value = df['Center'].iloc[-2]
-metric_value = df['Price'].iloc[-2] 
-price_time = df['Price Time'].iloc[-2] 
-price_date= df['Price Date'].iloc[-2]   # This value can be dynamically updated depending on your application
-last_price_value=df['Price'].iloc[-1]
 # Calculate percentage change
-percentage_change = round(((metric_value - last_price_value) / last_price_value) * 100,2)
-dela=str(percentage_change)+"%"
+percentage_change = round(((last_price_value - previous_price) / previous_price) * 100, 2)
+delta_value = f"{percentage_change}%"
 
-# Display the metric card
-
-
-# Display the percentage change with color formatting
-
-col11.metric(label="Center", value=f"{center_value}",border=True)
-col12.metric(label="Price", value=f"{metric_value:,.2f}",delta=dela,border=True)
-col13.metric(label="Price Date", value=f"{price_date}",border=True)
-col14.metric(label="Price Time", value=f"{price_time}",border=True)
-
-
-
-# Drop duplicate dates and keep the first occurrence of each date
-unique_dates_df = df.drop_duplicates(subset='Price Date', keep='first')
-
-# Extract lists of dates and prices
-dates = unique_dates_df['Price Date'].tolist()  # Format as string
-prices = unique_dates_df['Price'].tolist()
-print(dates,prices,"&&&")
-# Output the lists
-print("Dates:", dates)
-print("Prices:", prices)
+# Display Metrics
 col1, col2 = st.columns(2)
+col1.metric(label="Latest Price (Kolhapur)", value=f"{last_price_value:,.2f}", delta=delta_value, delta_color="inverse",border=True)
+col2.metric(label="Previous Price", value=f"{previous_price:,.2f}",border=True)
 
-# Table in the first column
-with col1:
-    st.dataframe(df)
+# Trend Line Data
+unique_dates_df = df.drop_duplicates(subset="Date", keep="first")
+dates = unique_dates_df["Date"].dt.strftime("%Y-%m-%d").tolist()  # Convert dates to string format
+prices = unique_dates_df["Kolhapur (S)"].tolist()
 
-# Trend Line in the second column
-with col2:
-    
-    c = (
+# Display Data Table
+st.subheader("Data Table")
+st.dataframe(df)
+
+# Trend Line Chart
+st.subheader("Price Trend Over Time")
+chart = (
     Line()
     .add_xaxis(dates)
     .add_yaxis(
-        "Price",
+        "Kolhapur Price",
         prices,
         markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
     )
     .set_global_opts(
-            title_opts=opts.TitleOpts(title="Past 10 days price"),
-            yaxis_opts=opts.AxisOpts(
-                interval=30, 
-                  min_=3400,    # Set the minimum value of the y-axis
-            max_=3600,  # Set the interval to 50 for y-axis ticks
-            ),
-        )
+        title_opts=opts.TitleOpts(title="Past Price Trends"),
+        yaxis_opts=opts.AxisOpts(interval=50, min_=min(prices)-10, max_=max(prices)+10),
     )
-   
-   
-                      
-    
-    
-    st_pyecharts(c, key="secharts") 
+)
+
+# Render the chart
+st_pyecharts(chart, key="secharts")
