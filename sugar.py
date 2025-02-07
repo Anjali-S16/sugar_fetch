@@ -6,7 +6,7 @@ import plotly.express as px
 st.set_page_config(page_title="Sugar Data Dashboard", layout="wide")
 
 # Path to the Hector Beverages logo (Since it's in 'photos' folder)
-logo_path = "photos/hector_logo.png"  # Ensure the file is correctly named
+logo_path = "hector_logo.png"  # Ensure the file is correctly named
 
 # Custom CSS for Professional Dark Theme
 st.markdown("""
